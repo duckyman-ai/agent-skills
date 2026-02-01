@@ -20,7 +20,7 @@ Includes **Dio + Retrofit** for type-safe REST API calls.
 
 **State Management**: Riverpod 3.0+ with code generation
 
-> **Note: Riverpod 3.0+ & Freezed 3.0+ Breaking Changes**
+> **Note: Riverpod 3.0+ & Freezed 3.0+ Required**
 >
 > **Riverpod 3.0+**: The `XxxRef` types (like `DioRef`, `UserRepositoryRef`, etc.) have been **removed** in favor of a unified `Ref` type.
 >
@@ -50,7 +50,7 @@ Includes **Dio + Retrofit** for type-safe REST API calls.
 > sealed class Failure with _$Failure { ... }
 > ```
 >
-> If you're working with an existing codebase using Riverpod 2.x or Freezed 2.x, you can still use it, but new projects should use the latest versions to avoid deprecation warnings.
+> **Required versions**: This skill requires Riverpod 3.0+ and Freezed 3.0+. Check your version with `flutter pub deps | grep riverpod`.
 
 **Error Handling**: fpdart's Either<Failure, T> for functional error handling
 
@@ -62,6 +62,7 @@ Includes **Dio + Retrofit** for type-safe REST API calls.
 lib/
 ├── core/
 │   ├── constants/
+│   │   ├── api_constants.dart
 │   ├── errors/
 │   │   ├── failures.dart
 │   │   └── network_exceptions.dart
@@ -71,13 +72,17 @@ lib/
 │   │       ├── auth_interceptor.dart
 │   │       ├── logging_interceptor.dart
 │   │       └── error_interceptor.dart
+│   ├── storage/
+│   ├── services/
 │   ├── router/
 │   │   └── app_router.dart
 │   └── utils/
+├── shared/ 
 ├── features/
 │   └── [feature_name]/
 │       ├── data/
 │       │   ├── models/
+│       │   │   └── [entity]_model.dart
 │       │   ├── datasources/
 │       │   │   └── [feature]_api_service.dart
 │       │   └── repositories/
@@ -90,8 +95,11 @@ lib/
 │       │       └── [action]_usecase.dart
 │       └── presentation/
 │           ├── providers/
+│           │   └── [feature]_provider.dart
 │           ├── screens/
+│           │   └── [feature]_screen.dart
 │           └── widgets/
+│               └── [feature]_widget.dart
 └── main.dart
 ```
 
@@ -255,11 +263,16 @@ dart run build_runner watch --delete-conflicting-outputs
 
 ## Knowledge References
 
-**Primary Libraries**:
-- Flutter 3.19+, Dart 3.3+
-- Riverpod 3.0+, freezed 3.0+
-- Dio 5.9+, Retrofit 4.9+
-- fpdart, go_router
+**Primary Libraries** (used in this skill):
+- **Flutter 3.19+**: Latest framework features
+- **Dart 3.3+**: Language features (patterns, records, `sealed` modifier)
+- **Riverpod 3.0+**: State management with unified `Ref` type
+- **Dio 5.9+**: HTTP client with interceptors
+- **Retrofit 4.9+**: Type-safe REST API code generation
+- **freezed 3.0+**: Immutable data classes with code generation
+- **json_serializable 6.x**: JSON serialization
+- **go_router 14.x+**: Declarative routing
+- **fpdart**: Functional error handling with Either type
 
 ## References
 
