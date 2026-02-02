@@ -1,0 +1,65 @@
+{
+  "name": "agent-skills",
+  "owner": {
+    "name": "duckyman-ai"
+  },
+  "description": "Collection of reusable skills for AI agents",
+  "plugins": [
+    {
+      "name": "flutter-clean-arch",
+      "source": "./skills/flutter-clean-arch",
+      "description": "Generate Flutter applications using Clean Architecture with feature-first structure, Riverpod state management, Dio + Retrofit networking, and fpdart error handling.",
+      "keywords": [
+        "flutter",
+        "flutter app",
+        "clean architecture",
+        "riverpod",
+        "feature-first",
+        "state management",
+        "api client",
+        "retrofit",
+        "dio",
+        "rest api",
+        "either",
+        "fpdart",
+        "freezed",
+        "repository pattern",
+        "domain layer",
+        "data layer",
+        "presentation layer"
+      ],
+      "tags": [
+        "flutter",
+        "mobile",
+        "clean-architecture",
+        "state-management",
+        "networking"
+      ],
+      "license": "MIT",
+      "strict": false
+    },
+    {
+      "name": "git-convention",
+      "source": "./skills/git-convention",
+      "description": "Generate conventional git commit messages following Angular commit convention format with automatic changelog support.",
+      "keywords": [
+        "git commit",
+        "commit message",
+        "conventional commit",
+        "changelog",
+        "git history",
+        "version control",
+        "commitlint",
+        "angular commit"
+      ],
+      "tags": [
+        "git",
+        "version-control",
+        "documentation",
+        "conventions"
+      ],
+      "license": "MIT",
+      "strict": false
+    }
+  ]
+}
