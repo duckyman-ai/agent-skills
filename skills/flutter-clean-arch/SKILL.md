@@ -36,18 +36,32 @@ Includes **Dio + Retrofit** for type-safe REST API calls.
 > SomeType someType(Ref ref) { ... }
 > ```
 >
-> **Freezed 3.0+**: Requires `sealed` keyword for union types with Dart 3.3.
+> **Freezed 3.0+**: The `sealed` keyword is **mandatory** for union types (classes with multiple constructors). This enables Dart 3's native pattern matching capabilities. Single-constructor classes can optionally use `sealed` or remain as `class`.
 >
-> **Freezed 2.x (Legacy)**:
+> **Freezed 2.x (Legacy) - Union Type**:
 > ```dart
 > @freezed
-> class Failure with _$Failure { ... }
+> class Result with _$Result {
+>   const factory Result.success(String data) = Success;
+>   const factory Result.error(String message) = Error;
+> }
 > ```
 >
-> **Freezed 3.x+ (Current)**:
+> **Freezed 3.x+ (Current) - Union Type**:
 > ```dart
 > @freezed
-> sealed class Failure with _$Failure { ... }
+> sealed class Result with _$Result {
+>   const factory Result.success(String data) = Success;
+>   const factory Result.error(String message) = Error;
+> }
+> ```
+>
+> Pattern matching with sealed classes (Dart 3):
+> ```dart
+> final message = switch (result) {
+>   Success(:final data) => 'Success: $data',
+>   Error(:final message) => 'Error: $message',
+> };
 > ```
 >
 > **Required versions**: This skill requires Riverpod 3.0+ and Freezed 3.0+. Check your version with `flutter pub deps | grep riverpod`.
