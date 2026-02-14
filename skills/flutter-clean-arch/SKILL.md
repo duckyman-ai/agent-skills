@@ -36,7 +36,37 @@ Includes **Dio + Retrofit** for type-safe REST API calls.
 > SomeType someType(Ref ref) { ... }
 > ```
 >
-> **Freezed 3.0+**: The `sealed` keyword is **mandatory** for union types (classes with multiple constructors). This enables Dart 3's native pattern matching capabilities. Single-constructor classes can optionally use `sealed` or remain as `class`.
+> **Freezed 3.0+**: Two major breaking changes from v2:
+>
+> ### 1. Required `sealed` / `abstract` Keyword
+> All classes using factory constructors now require either `sealed` or `abstract` keyword.
+>
+> | Class Type | Freezed 2.x (Legacy) | Freezed 3.x+ (Current) |
+> |------------|---------------------|------------------------|
+> | **Single constructor** | `class Person` | `abstract class Person` |
+> | **Union type (multiple constructors)** | `class Result` | `sealed class Result` |
+>
+> **Freezed 2.x (Legacy) - Single Constructor**:
+> ```dart
+> @freezed
+> class Person with _$Person {
+>   const factory Person({
+>     required String firstName,
+>     required String lastName,
+>   }) = _Person;
+> }
+> ```
+>
+> **Freezed 3.x+ (Current) - Single Constructor**:
+> ```dart
+> @freezed
+> abstract class Person with _$Person {
+>   const factory Person({
+>     required String firstName,
+>     required String lastName,
+>   }) = _Person;
+> }
+> ```
 >
 > **Freezed 2.x (Legacy) - Union Type**:
 > ```dart
@@ -56,11 +86,24 @@ Includes **Dio + Retrofit** for type-safe REST API calls.
 > }
 > ```
 >
-> Pattern matching with sealed classes (Dart 3):
+> ### 2. Pattern Matching (`.map` / `.when` Removed)
+> Freezed 3.x no longer generates `.map`/`.when` extensions. Use Dart 3's native pattern matching instead.
+>
+> **Freezed 2.x (Legacy) - Using `.map`**:
 > ```dart
-> final message = switch (result) {
->   Success(:final data) => 'Success: $data',
->   Error(:final message) => 'Error: $message',
+> final model = Model.first('42');
+> final res = model.map(
+>   first: (value) => 'first ${value.a}',
+>   second: (value) => 'second ${value.b} ${value.c}',
+> );
+> ```
+>
+> **Freezed 3.x+ (Current) - Using `switch` expression**:
+> ```dart
+> final model = Model.first('42');
+> final res = switch (model) {
+>   First(:final a) => 'first $a',
+>   Second(:final b, :final c) => 'second $b $c',
 > };
 > ```
 >
@@ -274,6 +317,7 @@ dart run build_runner watch --delete-conflicting-outputs
 | Either not unwrapping | Use `fold()`, `match()`, or `getOrElse()` to extract values |
 | `XxxRef` not found | Use unified `Ref` type instead (Riverpod 3.x+) |
 | `sealed` keyword error | Upgrade to Dart 3.3+ and Freezed 3.0+ |
+| `.map` / `.when` not found | Freezed 3.0+ removed these methods. Use Dart 3 `switch` expression pattern matching instead |
 
 ## Knowledge References
 
