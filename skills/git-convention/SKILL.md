@@ -1,199 +1,141 @@
 ---
 name: git-convention
-description: Generate conventional git commit messages following Angular convention format. Use this skill when creating commits, writing commit messages, or reviewing git history. Triggers include "git commit", "commit message", "changelog", or requests to version control changes.
+description: Write conventional git commit messages following the Angular commit convention format. Use this skill whenever writing commit messages, creating commits, reviewing git history, generating changelogs, or any task involving git version control. Triggers when you see "commit", "git commit", "commit message", "changelog", "version control", "git history", "semantic commit", "conventional commit", or when the user asks to commit changes, create a PR, or review commit history. Also use when setting up commit linting or husky hooks for enforcing commit conventions.
 ---
 
 # Git Convention Skill
 
-Generate conventional git commit messages following Angular commit convention format.
+Write conventional commit messages that are machine-readable, enable automatic changelog generation, and drive semantic versioning (`fix` → PATCH, `feat` → MINOR, `BREAKING CHANGE` → MAJOR).
 
-## Commit Message Format
+## Format
 
 ```
-<type>(<scope>): <subject>
+<type>[optional scope][!]: <subject>
 
-<body>
+[optional body]
 
-<footer>
+[optional footer(s)]
 ```
+
+Append `!` after type/scope to flag a breaking change without a footer: `feat!:` or `feat(api)!:`.
 
 ## Type
 
-Must be one of:
-
 | Type | Description |
 |------|-------------|
-| `feat` | A new feature |
-| `fix` | A bug fix |
-| `docs` | Documentation only changes |
-| `style` | Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc) |
-| `refactor` | A code change that neither fixes a bug nor adds a feature |
-| `perf` | A code change that improves performance |
-| `test` | Adding missing tests or correcting existing tests |
-| `build` | Changes that affect the build system or external dependencies |
-| `ci` | Changes to CI configuration files and scripts |
-| `chore` | Other changes that don't modify src or test files |
+| `feat` | New feature |
+| `fix` | Bug fix |
+| `docs` | Documentation changes |
+| `style` | Formatting, whitespace (no logic change) |
+| `refactor` | Code change that neither fixes a bug nor adds a feature |
+| `perf` | Performance improvement |
+| `test` | Adding or correcting tests |
+| `build` | Build system or dependency changes |
+| `ci` | CI configuration changes |
+| `chore` | Other changes not modifying src or test files |
 | `revert` | Reverts a previous commit |
 
 ## Scope
 
-The scope should be the name of the npm package affected (as indicated by package.json).
+The scope identifies the area of change — module, package, component, or feature name. Use lowercase, keep it short.
 
-Example scopes:
-- `core`
-- `auth`
-- `user`
-- `api`
-- `ui`
+Examples: `auth`, `api`, `ui`, `user`, `core`, `payment`, `config`
 
-## Subject
+## Subject Rules
 
-The subject contains a succinct description of the change:
-
-- Use imperative, present tense: "change" not "changed" nor "changes"
-- Don't capitalize the first letter
-- No period (.) at the end
+- Imperative, present tense: "add" not "added" or "adds"
+- Lowercase first letter, no period at the end
+- Under 72 characters
 
 ## Body
 
-The body should include the motivation for the change and contrast this with previous behavior:
-
-- Use imperative, present tense: "change" not "changed" nor "changes"
-- Include the motivation for the change and contrast this with previous behavior
+Explain **what** changed and **why**, not how. Separate from subject with a blank line. Use bullet points for multiple changes.
 
 ## Footer
 
-The footer should contain any information about Breaking Changes and is also the place to reference GitHub issues that this commit Closes.
+One or more footers in git trailer format (`Token: value` or `Token #value`). Common tokens:
 
-Breaking Changes should start with the word `BREAKING CHANGE:` with a space or two newlines.
+- `Closes #123` — link to issues
+- `BREAKING CHANGE: description` — note breaking API changes
+- `Refs: #456` — reference related commits/PRs
+- `Reviewed-by: Name` — credit reviewers
 
 ## Examples
 
-### Feature with scope
+**Feature:**
 ```
 feat(auth): add login with Google
 
-Implement OAuth2 authentication flow using Google Sign-In
 - Add GoogleSignInButton component
 - Update auth service to handle OAuth tokens
-- Add error handling for failed authentication
+- Handle failed authentication with error boundary
 
 Closes #123
 ```
 
-### Bug fix
+**Bug fix:**
 ```
 fix(api): handle null response from user endpoint
 
-Previously, null responses would crash the app.
-Now returns empty user object instead.
+Null responses crashed the app. Return empty user object instead.
 ```
 
-### Breaking change
+**Breaking change (footer):**
 ```
 feat(core): change user model structure
 
 BREAKING CHANGE: User.id is now String instead of int.
-
-All database queries and API calls need to be updated
-to handle string IDs.
+All database queries need updating.
 ```
 
-### Documentation
+**Breaking change (`!` notation):**
 ```
-docs(readme): update installation instructions
-
-Added step for installing required system dependencies.
+feat(api)!: send email when product ships
 ```
 
-### Refactoring
+**Refactoring:**
 ```
-refactor(user): extract validation logic to separate class
+refactor(user): extract validation to separate class
 
-Move all user validation logic from UserService to
-new UserValidator class for better testability.
-```
-
-### Multiple paragraphs in body
-```
-feat(api): add pagination support
-
-Implement cursor-based pagination for list endpoints.
-
-- Add PaginationFilter class
-- Update repository methods to accept pagination params
-- Add tests for pagination edge cases
-
-This improves performance for large datasets and
-reduces memory usage.
-```
-
-### Revert
-```
-revert: feat(auth): add login with Facebook
-
-This reverts commit 1a2b3c4d
+Move validation from UserService to UserValidator for testability.
 ```
 
 ## Best Practices
 
 **DO**:
-- Use the present tense ("add" not "added")
-- Use the imperative mood ("move" not "moves")
-- Limit the first line to 72 characters or less
+- Use imperative mood throughout ("add", "move", "fix")
+- Keep subject under 72 characters
+- Explain what and why in the body
 - Reference issues in the footer
-- Explain what and why, not how
-- Keep subject line short and descriptive
-- Use body to explain what and why vs. how
+- One logical change per commit
 
 **DON'T**:
 - Use past tense
-- Use period at the end of subject
-- Capitalize first letter of subject
+- Capitalize subject or end with period
 - Mix multiple types in one commit
 - Write vague subjects like "update stuff"
-- Include how you fixed it in the message
-- Exceed 72 characters on first line
+- Explain how the code works in the message
+- Add Co-Authored-By or AI attribution lines
 
-## Changelog Generation
+## Tooling
 
-Conventional commits enable automatic changelog generation:
+These tools make conventional commits practical by automating enforcement and changelog generation. Search for the right tool based on your project's language:
 
-```bash
-# Using conventional-changelog
-npm install -g conventional-changelog
-conventional-changelog -p angular -i CHANGELOG.md -s
-```
+**Commit linting** — reject commits that don't follow the format. Works as a git hook (often via husky, pre-commit, or lefthook).
 
-## Commit Linting
+**Changelog generation** — read commit history and produce a categorized CHANGELOG.md automatically:
+- `feat` → Features section
+- `fix` → Bug Fixes section
+- `BREAKING CHANGE` → Breaking Changes section
 
-Enforce commit message conventions with commitlint:
-
-```json
-// commitlint.config.js
-{
-  "extends": ["@commitlint/config-angular"],
-  "rules": {
-    "type-enum": [2, "always", ["feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore", "revert"]],
-    "type-case": [2, "always", "lower-case"],
-    "subject-empty": [2, "never"],
-    "subject-case": [0]
-  }
-}
-```
-
-## Quick Reference
-
-```
-feat: add new feature
-fix: fix bug
-docs: update documentation
-style: format code (no logic change)
-refactor: refactor code
-perf: improve performance
-test: add/update tests
-build: change build system
-ci: change CI config
-chore: other changes
-revert: revert previous commit
-```
+Popular options by ecosystem:
+- **JS/TS**: commitlint + conventional-changelog
+- **Python**: commitizen
+- **Flutter/Dart**: changelog_cli + conventional_commit
+- **Android**: jreleaser + conventional-commit-gradle-plugin
+- **Go**: goreleaser + git-chglog
+- **Rust**: cog (cocogitto)
+- **Ruby**: commitizen-rb
+- **Java/Kotlin**: jreleaser + conventional-commit-gradle-plugin
+- **.NET/C#**: GitVersion + MinVer
+- **PHP**: conventional-commits-php
