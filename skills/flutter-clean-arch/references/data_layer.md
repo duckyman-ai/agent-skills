@@ -35,7 +35,6 @@ sealed class UserModel with _$UserModel {
   factory UserModel.fromJson(Map<String, dynamic> json) =>
       _$UserModelFromJson(json);
 
-  // Convert to domain entity
   User toEntity() => User(
     id: id,
     name: name,
@@ -399,28 +398,52 @@ class UserRepositoryImpl implements UserRepository {
 
 ## Model Conversions
 
-### Entity to Model
+### Repository with Response Validation
+
+Validate critical fields before converting to domain entities. This prevents corrupt or malicious data from entering your domain layer:
 
 ```dart
-// For sending data to API
-extension UserEntityExtension on User {
-  UserModel toModel() => UserModel(
-    id: id,
-    name: name,
-    email: email,
-    createdAt: createdAt,
-  );
+class SecureUserRepositoryImpl implements UserRepository {
+  final UserApiService apiService;
 
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'email': email,
-    'created_at': createdAt?.toIso8601String(),
-  };
+  SecureUserRepositoryImpl(this.apiService);
+
+  @override
+  Future<Either<Failure, User>> getUser(String id) async {
+    try {
+      final userModel = await apiService.getUser(id);
+
+      // Validate critical fields
+      if (userModel.id.isEmpty) {
+        return const Left(Failure.validation('Invalid response: missing user ID'));
+      }
+      if (userModel.email.isEmpty || !userModel.email.contains('@')) {
+        return const Left(Failure.validation('Invalid response: malformed email'));
+      }
+      // Validate external URLs (avatars, etc.)
+      if (userModel.avatarUrl != null && !_isValidUrl(userModel.avatarUrl!)) {
+        return const Left(Failure.validation('Invalid response: unsafe URL'));
+      }
+
+      return Right(userModel.toEntity());
+    } on DioException catch (e) {
+      final exception = NetworkExceptions.fromDioError(e);
+      return Left(Failure.network(exception.message));
+    } catch (e) {
+      return Left(Failure.unexpected(e.toString()));
+    }
+  }
+
+  bool _isValidUrl(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return false;
+    // Enforce HTTPS in release builds
+    return kDebugMode || uri.scheme == 'https';
+  }
 }
 ```
 
-### Model to Entity
+### Entity to Model
 
 ```dart
 // Already included in freezed class
@@ -448,3 +471,5 @@ sealed class UserModel with _$UserModel {
 5. **Use Either<Failure, T>** for all repository methods
 6. **Name API services** with `ApiService` suffix
 7. **One API service per feature/domain**
+8. **Validate critical fields** in repositories — reject empty IDs, invalid URLs, or out-of-range values before returning entities
+9. **Sanitize external URLs** — if a model contains URLs (images, links), validate the scheme is HTTPS in production

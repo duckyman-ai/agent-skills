@@ -491,6 +491,51 @@ class ErrorStateWidget extends StatelessWidget {
 }
 ```
 
+### Secure Network Image Widget
+
+For displaying images from API responses, use `CachedNetworkImage` with error handling. Never use `Image.network` directly for external URLs — it lacks error handling, caching, and can load arbitrary content:
+
+```dart
+import 'package:cached_network_image/cached_network_image.dart';
+
+class SecureNetworkImage extends StatelessWidget {
+  final String? imageUrl;
+  final double? width;
+  final double? height;
+  final BoxFit fit;
+
+  const SecureNetworkImage({
+    required this.imageUrl,
+    this.width,
+    this.height,
+    this.fit = BoxFit.cover,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (imageUrl == null || imageUrl!.isEmpty) {
+      return Icon(Icons.image, size: width ?? 50, color: Colors.grey);
+    }
+
+    return CachedNetworkImage(
+      imageUrl: imageUrl!,
+      width: width,
+      height: height,
+      fit: fit,
+      placeholder: (_, __) => const Center(
+        child: CircularProgressIndicator(strokeWidth: 2),
+      ),
+      errorWidget: (_, __, ___) => Icon(
+        Icons.broken_image,
+        size: width ?? 50,
+        color: Colors.grey,
+      ),
+    );
+  }
+}
+```
+
 ## Best Practices
 
 1. **Use @riverpod annotations** for all providers
@@ -503,3 +548,4 @@ class ErrorStateWidget extends StatelessWidget {
 8. **Use ref.watch** for reading, **ref.read** for calling methods
 9. **Avoid business logic** in widgets - use use cases
 10. **Use const constructors** for widgets when possible
+11. **Use CachedNetworkImage** instead of Image.network for external URLs — it provides error handling, caching, and placeholder support out of the box

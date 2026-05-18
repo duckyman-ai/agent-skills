@@ -1,6 +1,6 @@
 ---
 name: flutter-clean-arch
-description: Generate Flutter applications using Clean Architecture with feature-first structure, Riverpod state management, Dio + Retrofit for networking, and fpdart error handling. Use this skill when creating Flutter apps, implementing features with clean architecture patterns, setting up Riverpod providers, handling data with Either type for functional error handling, making HTTP requests with type-safe API clients, or structuring projects with domain/data/presentation layers. Triggers include "Flutter app", "clean architecture", "Riverpod", "feature-first", "state management", "API client", "Retrofit", "Dio", "REST API", or requests to build Flutter features with separation of concerns.
+description: Build Flutter apps with Clean Architecture — feature-first structure, Riverpod 3.0+ state management, Dio + Retrofit networking, and fpdart functional error handling. Use this skill whenever you are working on a Flutter project that involves creating features, setting up project architecture, building API integrations, managing state, or structuring code with domain/data/presentation layers. This includes tasks like "create a Flutter feature", "set up Riverpod providers", "add an API service", "build a Flutter app", "clean architecture Flutter", "feature-first Flutter", or any Flutter code involving Dio, Retrofit, fpdart Either, or freezed data classes. Also use when scaffolding new Flutter projects, migrating from MVC/MVVM to clean architecture, or adding networking layers to existing Flutter apps.
 ---
 
 # Flutter Clean Architecture Skill
@@ -20,98 +20,35 @@ Includes **Dio + Retrofit** for type-safe REST API calls.
 
 **State Management**: Riverpod 3.0+ with code generation
 
-> **Note: Riverpod 3.0+ & Freezed 3.0+ Required**
+> **Required: Riverpod 3.0+ & Freezed 3.0+** — outdated patterns cause compile errors and hallucination loops.
 >
-> **Riverpod 3.0+**: The `XxxRef` types (like `DioRef`, `UserRepositoryRef`, etc.) have been **removed** in favor of a unified `Ref` type.
+> - Riverpod: use `Ref ref` (unified), NOT `XxxRef ref`
+> - Freezed: use `sealed class` for union types, `abstract class` for single constructors
+> - Pattern matching: use Dart 3 `switch`, NOT `.map()`/`.when()`
 >
-> **Riverpod 2.x (Legacy)**:
 > ```dart
-> @riverpod
-> SomeType someType(SomeTypeRef ref) { ... }
-> ```
->
-> **Riverpod 3.x+ (Current)**:
-> ```dart
+> // Riverpod 3.x+
 > @riverpod
 > SomeType someType(Ref ref) { ... }
-> ```
 >
-> **Freezed 3.0+**: Two major breaking changes from v2:
->
-> ### 1. Required `sealed` / `abstract` Keyword
-> All classes using factory constructors now require either `sealed` or `abstract` keyword.
->
-> | Class Type | Freezed 2.x (Legacy) | Freezed 3.x+ (Current) |
-> |------------|---------------------|------------------------|
-> | **Single constructor** | `class Person` | `abstract class Person` |
-> | **Union type (multiple constructors)** | `class Result` | `sealed class Result` |
->
-> **Freezed 2.x (Legacy) - Single Constructor**:
-> ```dart
+> // Freezed 3.x+ — union type
 > @freezed
-> class Person with _$Person {
->   const factory Person({
->     required String firstName,
->     required String lastName,
->   }) = _Person;
-> }
-> ```
+> sealed class Result with _$Result { ... }
 >
-> **Freezed 3.x+ (Current) - Single Constructor**:
-> ```dart
-> @freezed
-> abstract class Person with _$Person {
->   const factory Person({
->     required String firstName,
->     required String lastName,
->   }) = _Person;
-> }
-> ```
->
-> **Freezed 2.x (Legacy) - Union Type**:
-> ```dart
-> @freezed
-> class Result with _$Result {
->   const factory Result.success(String data) = Success;
->   const factory Result.error(String message) = Error;
-> }
-> ```
->
-> **Freezed 3.x+ (Current) - Union Type**:
-> ```dart
-> @freezed
-> sealed class Result with _$Result {
->   const factory Result.success(String data) = Success;
->   const factory Result.error(String message) = Error;
-> }
-> ```
->
-> ### 2. Pattern Matching (`.map` / `.when` Removed)
-> Freezed 3.x no longer generates `.map`/`.when` extensions. Use Dart 3's native pattern matching instead.
->
-> **Freezed 2.x (Legacy) - Using `.map`**:
-> ```dart
-> final model = Model.first('42');
-> final res = model.map(
->   first: (value) => 'first ${value.a}',
->   second: (value) => 'second ${value.b} ${value.c}',
-> );
-> ```
->
-> **Freezed 3.x+ (Current) - Using `switch` expression**:
-> ```dart
-> final model = Model.first('42');
+> // Freezed 3.x+ — pattern matching
 > final res = switch (model) {
 >   First(:final a) => 'first $a',
->   Second(:final b, :final c) => 'second $b $c',
+>   Second(:final b) => 'second $b',
 > };
 > ```
 >
-> **Required versions**: This skill requires Riverpod 3.0+ and Freezed 3.0+. Check your version with `flutter pub deps | grep riverpod`.
+> Requires Dart 3.3+, Riverpod 3.0+, Freezed 3.0+. See **[migration_guide.md](references/migration_guide.md)** for full before/after examples.
 
 **Error Handling**: fpdart's Either<Failure, T> for functional error handling
 
 **Networking**: Dio + Retrofit for type-safe REST API calls
+
+> **Always use the latest stable versions** of all libraries. Before adding dependencies, check `pub.dev` for the current versions of Riverpod, Freezed, Dio, Retrofit, fpdart, and go_router. Never default to outdated major versions (e.g. Riverpod 2.x, Freezed 2.x).
 
 ## Project Structure
 
@@ -162,25 +99,20 @@ lib/
 
 ## Quick Start
 
-### 1. Domain Layer (Entities, Repository Interfaces, UseCases)
+Build features in this order: **Domain → Data → Presentation**.
+
+### 1. Domain Layer
 
 ```dart
-// Entity
 @freezed
 sealed class User with _$User {
-  const factory User({
-    required String id,
-    required String name,
-    required String email,
-  }) = _User;
+  const factory User({required String id, required String name, required String email}) = _User;
 }
 
-// Repository Interface
 abstract class UserRepository {
   Future<Either<Failure, User>> getUser(String id);
 }
 
-// UseCase
 class GetUser {
   final UserRepository repository;
   GetUser(this.repository);
@@ -188,63 +120,28 @@ class GetUser {
 }
 ```
 
-### 2. Data Layer (Models, API Service, Repository Implementation)
+### 2. Data Layer
 
 ```dart
-// Model with JSON serialization
 @freezed
 sealed class UserModel with _$UserModel {
   const UserModel._();
-  const factory UserModel({
-    required String id,
-    required String name,
-    required String email,
-  }) = _UserModel;
-
+  const factory UserModel({required String id, required String name, required String email}) = _UserModel;
   factory UserModel.fromJson(Map<String, dynamic> json) => _$UserModelFromJson(json);
-
   User toEntity() => User(id: id, name: name, email: email);
 }
 
-// Retrofit API Service
 @RestApi()
 abstract class UserApiService {
   factory UserApiService(Dio dio) = _UserApiService;
-
   @GET('/users/{id}')
   Future<UserModel> getUser(@Path('id') String id);
 }
-
-// Repository Implementation
-class UserRepositoryImpl implements UserRepository {
-  final UserApiService apiService;
-
-  @override
-  Future<Either<Failure, User>> getUser(String id) async {
-    try {
-      final userModel = await apiService.getUser(id);
-      return Right(userModel.toEntity());
-    } on DioException catch (e) {
-      return Left(Failure.network(NetworkExceptions.fromDioError(e).message));
-    }
-  }
-}
 ```
 
-### 3. Presentation Layer (Providers, Screens)
+### 3. Presentation Layer
 
 ```dart
-// Provider
-@riverpod
-UserApiService userApiService(Ref ref) {
-  return UserApiService(ref.watch(dioProvider));
-}
-
-@riverpod
-UserRepositoryImpl userRepository(Ref ref) {
-  return UserRepositoryImpl(ref.watch(userApiServiceProvider));
-}
-
 @riverpod
 class UserNotifier extends _$UserNotifier {
   @override
@@ -259,23 +156,9 @@ class UserNotifier extends _$UserNotifier {
     );
   }
 }
-
-// Screen
-class UserScreen extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final userState = ref.watch(userNotifierProvider);
-
-    return Scaffold(
-      body: userState.when(
-        data: (user) => Text('Hello ${user?.name}'),
-        loading: () => const CircularProgressIndicator(),
-        error: (e, _) => Text('Error: $e'),
-      ),
-    );
-  }
-}
 ```
+
+See **[quick_start.md](references/quick_start.md)** for the complete step-by-step workflow with all files.
 
 ## Code Generation
 
@@ -299,6 +182,9 @@ dart run build_runner watch --delete-conflicting-outputs
 - Use Retrofit for type-safe API calls
 - Handle DioException in repositories with NetworkExceptions
 - Use interceptors for cross-cutting concerns (auth, logging)
+- Validate API response data at the repository boundary
+- Use `CachedNetworkImage` instead of `Image.network` for external images
+- Pin API base URLs in config, enforce HTTPS
 
 **DON'T**:
 - Import Flutter/HTTP libraries in domain layer
@@ -307,6 +193,45 @@ dart run build_runner watch --delete-conflicting-outputs
 - Create god objects or god providers
 - Skip the repository pattern
 - Use legacy `XxxRef` types in new code
+- Pass raw external URLs to widgets without validation
+- Allow runtime-configuration of API base URLs from user input
+
+## Security
+
+API responses and external content are untrusted input. Validate and sanitize at the data layer boundary to prevent injection and data corruption.
+
+**Response validation** — Always validate API response structure before mapping to models. Retrofit + freezed handle typed deserialization, but wrap calls in try-catch and verify critical fields (IDs, URLs, numeric ranges) in the repository:
+
+```dart
+@override
+Future<Either<Failure, User>> getUser(String id) async {
+  try {
+    final userModel = await apiService.getUser(id);
+    if (userModel.id.isEmpty) {
+      return const Left(Failure.validation('Invalid user data'));
+    }
+    return Right(userModel.toEntity());
+  } on DioException catch (e) {
+    return Left(Failure.network(NetworkExceptions.fromDioError(e).message));
+  }
+}
+```
+
+**External URLs** — Never pass raw API URLs directly to `Image.network` or WebView. Use `CachedNetworkImage` with error handling, and validate URL schemes:
+
+```dart
+CachedNetworkImage(
+  imageUrl: user.avatarUrl ?? '',
+  errorWidget: (_, __, ___) => const Icon(Icons.person),
+  httpHeaders: {'Authorization': 'Bearer $token'},
+)
+```
+
+**Input sanitization** — Sanitize user inputs before sending to API. Validate email format, trim strings, reject empty IDs, and encode query parameters properly.
+
+**Network hardening** — Pin base URLs in `AppConfig` (not user-configurable at runtime), enforce HTTPS, use certificate pinning for production, and set conservative timeouts.
+
+Read **[network_setup.md](references/network_setup.md)** for the full interceptor setup and **[data_layer.md](references/data_layer.md)** for validation patterns at the repository boundary.
 
 ## Common Issues
 
@@ -335,8 +260,12 @@ dart run build_runner watch --delete-conflicting-outputs
 ## References
 
 - **[quick_start.md](references/quick_start.md)** - Step-by-step feature creation workflow
-- **[data_layer.md](references/data_layer.md)** - Models, Retrofit API services, Repositories
-- **[presentation_layer.md](references/presentation_layer.md)** - Providers, Screens, Widgets patterns
-- **[network_setup.md](references/network_setup.md)** - Dio provider, Interceptors, Network exceptions
+- **[data_layer.md](references/data_layer.md)** - Models, Retrofit API services, Repositories, Response validation
+- **[presentation_layer.md](references/presentation_layer.md)** - Providers, Screens, Widgets, Secure image loading
+- **[network_setup.md](references/network_setup.md)** - Dio provider, Interceptors, Network exceptions, Response validation
 - **[error_handling.md](references/error_handling.md)** - Either patterns, Failure types, Error strategies
 - **[retrofit_patterns.md](references/retrofit_patterns.md)** - Complete Retrofit API request patterns
+- **[provider_patterns.md](references/provider_patterns.md)** - Advanced Riverpod patterns (pagination, caching, optimistic updates)
+- **[testing_guide.md](references/testing_guide.md)** - Unit, widget, and integration testing strategies
+- **[feature_examples.md](references/feature_examples.md)** - Complete Auth feature implementation
+- **[migration_guide.md](references/migration_guide.md)** - Riverpod 2→3 & Freezed 2→3 full before/after examples

@@ -1,10 +1,10 @@
-# Complete Feature Examples
+# Complete Feature Example: Authentication
 
-This document provides complete implementations of common Flutter features using Clean Architecture.
+A complete auth feature implementation showing all three Clean Architecture layers working together. Use this as a reference when building similar features.
 
-**Note**: Data source implementations (HTTP clients, databases, etc.) are not specified. Implement according to your needs using Dio, http, GraphQL, Firebase, SQLite, etc.
+Data source implementations (HTTP clients, databases, etc.) are abstract — implement with Dio, http, GraphQL, Firebase, etc. as needed.
 
-## Example 1: Authentication Feature
+## Authentication Feature
 
 ### Domain Layer
 
@@ -109,26 +109,24 @@ abstract class AuthDataSource {
 
 /// Example implementation (replace with your actual data source)
 class AuthRemoteDataSource implements AuthDataSource {
-  // TODO: Implement with Dio, http, GraphQL, Firebase, etc.
-  // This is a placeholder - you must provide the actual implementation
   @override
   Future<AuthUserModel> login(String email, String password) {
-    throw UnimplementedError('Implement login with your data source');
+    throw UnimplementedError();
   }
 
   @override
   Future<AuthUserModel> register(String email, String password, String name) {
-    throw UnimplementedError('Implement register with your data source');
+    throw UnimplementedError();
   }
 
   @override
   Future<void> logout() {
-    throw UnimplementedError('Implement logout with your data source');
+    throw UnimplementedError();
   }
 
   @override
   Future<String?> getToken() {
-    throw UnimplementedError('Implement getToken with your data source');
+    throw UnimplementedError();
   }
 }
 ```
@@ -294,7 +292,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         if (mounted) {
           final failure = authState.error as Failure;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(failure.toString())),
+            SnackBar(content: Text(failure.message)),
           );
         }
       }
@@ -366,333 +364,4 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 }
 ```
 
-## Example 2: Product List with Pagination
-
-### Domain Layer
-
-**Entity** (domain/entities/product.dart):
-```dart
-import 'package:freezed_annotation/freezed_annotation.dart';
-
-part 'product.freezed.dart';
-
-@freezed
-sealed class Product with _$Product {
-  const factory Product({
-    required String id,
-    required String name,
-    required String description,
-    required double price,
-    String? imageUrl,
-    required int stock,
-  }) = _Product;
-}
-
-@freezed
-sealed class ProductList with _$ProductList {
-  const factory ProductList({
-    required List<Product> items,
-    required int totalCount,
-    required int page,
-    required bool hasMore,
-  }) = _ProductList;
-}
-```
-
-**Repository** (domain/repositories/product_repository.dart):
-```dart
-import 'package:fpdart/fpdart.dart';
-import '../../core/errors/failures.dart';
-import '../entities/product.dart';
-
-abstract class ProductRepository {
-  Future<Either<Failure, ProductList>> getProducts({
-    required int page,
-    required int limit,
-  });
-  Future<Either<Failure, Product>> getProduct(String id);
-}
-```
-
-### Data Layer
-
-**DataSource Interface** (data/datasources/product_datasource.dart):
-```dart
-import '../models/product_model.dart';
-
-/// Abstract data source - implement with your choice of HTTP client, database, etc.
-abstract class ProductDataSource {
-  Future<ProductListModel> getProducts({required int page, required int limit});
-  Future<ProductModel> getProduct(String id);
-}
-
-/// Example implementation (replace with your actual data source)
-class ProductRemoteDataSource implements ProductDataSource {
-  // TODO: Implement with Dio, http, GraphQL, etc.
-  @override
-  Future<ProductListModel> getProducts({required int page, required int limit}) {
-    throw UnimplementedError('Implement getProducts with your data source');
-  }
-
-  @override
-  Future<ProductModel> getProduct(String id) {
-    throw UnimplementedError('Implement getProduct with your data source');
-  }
-}
-```
-
-**Model** (data/models/product_model.dart):
-```dart
-import 'package:freezed_annotation/freezed_annotation.dart';
-import '../../domain/entities/product.dart';
-
-part 'product_model.freezed.dart';
-part 'product_model.g.dart';
-
-@freezed
-sealed class ProductModel with _$ProductModel {
-  const factory ProductModel({
-    required String id,
-    required String name,
-    required String description,
-    required double price,
-    String? imageUrl,
-    required int stock,
-  }) = _ProductModel;
-
-  factory ProductModel.fromJson(Map<String, dynamic> json) =>
-      _$ProductModelFromJson(json);
-
-  Product toEntity() => Product(
-    id: id,
-    name: name,
-    description: description,
-    price: price,
-    imageUrl: imageUrl,
-    stock: stock,
-  );
-}
-
-@freezed
-sealed class ProductListModel with _$ProductListModel {
-  const factory ProductListModel({
-    required List<ProductModel> items,
-    required int totalCount,
-    required int page,
-    required bool hasMore,
-  }) = _ProductListModel;
-}
-```
-
-**Repository Implementation** (data/repositories/product_repository_impl.dart):
-```dart
-import 'package:fpdart/fpdart.dart';
-import '../../core/errors/failures.dart';
-import '../../domain/entities/product.dart';
-import '../../domain/repositories/product_repository.dart';
-import '../datasources/product_datasource.dart';
-
-class ProductRepositoryImpl implements ProductRepository {
-  final ProductDataSource dataSource;
-
-  ProductRepositoryImpl(this.dataSource);
-
-  @override
-  Future<Either<Failure, ProductList>> getProducts({
-    required int page,
-    required int limit,
-  }) async {
-    try {
-      final productListModel = await dataSource.getProducts(page: page, limit: limit);
-      return Right(ProductList(
-        items: productListModel.items.map((m) => m.toEntity()).toList(),
-        totalCount: productListModel.totalCount,
-        page: productListModel.page,
-        hasMore: productListModel.hasMore,
-      ));
-    } on Exception catch (e) {
-      return Left(ServerFailure(e.toString()));
-    } catch (e) {
-      return Left(UnexpectedFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, Product>> getProduct(String id) async {
-    try {
-      final productModel = await dataSource.getProduct(id);
-      return Right(productModel.toEntity());
-    } on Exception catch (e) {
-      return Left(ServerFailure(e.toString()));
-    } catch (e) {
-      return Left(UnexpectedFailure(e.toString()));
-    }
-  }
-}
-```
-
-### Presentation Layer with Infinite Scroll
-
-**Provider** (presentation/providers/product_provider.dart):
-```dart
-import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../domain/entities/product.dart';
-import '../../data/datasources/product_datasource.dart';
-import '../../data/repositories/product_repository_impl.dart';
-
-part 'product_provider.g.dart';
-
-@riverpod
-ProductDataSource productDataSource(Ref ref) {
-  // Return your implementation: ProductRemoteDataSource(), ProductLocalDataSource(), etc.
-  throw UnimplementedError('Provide your ProductDataSource implementation');
-}
-
-@riverpod
-ProductRepositoryImpl productRepository(Ref ref) {
-  return ProductRepositoryImpl(ref.watch(productDataSourceProvider));
-}
-
-@riverpod
-class ProductListNotifier extends _$ProductListNotifier {
-  int _currentPage = 1;
-  final int _limit = 20;
-
-  @override
-  FutureOr<List<Product>> build() async {
-    return _fetchProducts();
-  }
-
-  Future<List<Product>> _fetchProducts() async {
-    final result = await ref.read(productRepositoryProvider).getProducts(
-      page: _currentPage,
-      limit: _limit,
-    );
-
-    return result.fold(
-      (failure) => throw failure,
-      (productList) => productList.items,
-    );
-  }
-
-  Future<void> loadMore() async {
-    if (state.isLoading) return;
-
-    _currentPage++;
-
-    final result = await ref.read(productRepositoryProvider).getProducts(
-      page: _currentPage,
-      limit: _limit,
-    );
-
-    result.fold(
-      (failure) {
-        _currentPage--; // Revert on error
-        state = AsyncError(failure, StackTrace.current);
-      },
-      (productList) {
-        final currentProducts = state.value ?? [];
-        state = AsyncData([...currentProducts, ...productList.items]);
-      },
-    );
-  }
-
-  Future<void> refresh() async {
-    _currentPage = 1;
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() => _fetchProducts());
-  }
-}
-```
-
-**Screen with Infinite Scroll** (presentation/screens/product_list_screen.dart):
-```dart
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/product_provider.dart';
-
-class ProductListScreen extends ConsumerStatefulWidget {
-  const ProductListScreen({super.key});
-
-  @override
-  ConsumerState<ProductListScreen> createState() => _ProductListScreenState();
-}
-
-class _ProductListScreenState extends ConsumerState<ProductListScreen> {
-  final _scrollController = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_onScroll);
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent * 0.9) {
-      ref.read(productListNotifierProvider.notifier).loadMore();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final productsState = ref.watch(productListNotifierProvider);
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Products')),
-      body: productsState.when(
-        data: (products) {
-          if (products.isEmpty) {
-            return const Center(child: Text('No products found'));
-          }
-
-          return RefreshIndicator(
-            onRefresh: () => ref.read(productListNotifierProvider.notifier).refresh(),
-            child: ListView.builder(
-              controller: _scrollController,
-              itemCount: products.length + 1,
-              itemBuilder: (context, index) {
-                if (index == products.length) {
-                  return const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-
-                final product = products[index];
-                return ListTile(
-                  leading: product.imageUrl != null
-                      ? Image.network(product.imageUrl!, width: 50, height: 50)
-                      : const Icon(Icons.image),
-                  title: Text(product.name),
-                  subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
-                  trailing: Text('Stock: ${product.stock}'),
-                );
-              },
-            ),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Error: $error'),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(productListNotifierProvider),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-```
+For pagination patterns, see **[provider_patterns.md](provider_patterns.md)** (Pattern 10) and **[presentation_layer.md](presentation_layer.md)** (List Screen patterns).

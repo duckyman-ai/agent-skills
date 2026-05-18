@@ -129,14 +129,8 @@ class LoggingInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     if (kDebugMode) {
-      print('==> REQUEST');
-      print('Method: ${options.method}');
-      print('URL: ${options.uri}');
-      print('Headers: ${options.headers}');
-      if (options.data != null) {
-        print('Body: ${options.data}');
-      }
-      print('Query Parameters: ${options.queryParameters}');
+      print('→ ${options.method} ${options.uri}');
+      if (options.data != null) print('  Body: ${options.data}');
     }
     handler.next(options);
   }
@@ -144,11 +138,7 @@ class LoggingInterceptor extends Interceptor {
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     if (kDebugMode) {
-      print('<== RESPONSE');
-      print('Status Code: ${response.statusCode}');
-      print('URL: ${response.requestOptions.uri}');
-      print('Data: ${response.data}');
-      print('Headers: ${response.headers}');
+      print('← ${response.statusCode} ${response.requestOptions.uri}');
     }
     handler.next(response);
   }
@@ -156,10 +146,7 @@ class LoggingInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (kDebugMode) {
-      print('==> ERROR');
-      print('Type: ${err.type}');
-      print('Message: ${err.message}');
-      print('Response: ${err.response}');
+      print('✕ ${err.type} ${err.message}');
     }
     handler.next(err);
   }
@@ -189,14 +176,12 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
-    // Add auth token if available
     final authToken = ref.read(authTokenProvider);
 
     if (authToken != null && authToken.accessToken.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer ${authToken.accessToken}';
     }
 
-    // Add refresh token header if needed
     if (authToken?.refreshToken != null) {
       options.headers['X-Refresh-Token'] = authToken?.refreshToken;
     }
@@ -206,15 +191,12 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    // Handle 401 - token expired
     if (err.response?.statusCode == 401) {
-      // Try to refresh token
       final refreshToken = ref.read(refreshTokenProvider.notifier);
 
       final refreshed = await refreshToken();
 
       if (refreshed) {
-        // Retry the original request with new token
         final options = err.requestOptions;
         final newToken = ref.read(authTokenProvider)?.accessToken;
 
@@ -226,14 +208,12 @@ class AuthInterceptor extends Interceptor {
             handler.resolve(response);
             return;
           } catch (e) {
-            // If retry fails, continue with error
+            // Retry failed, continue with error
           }
         }
       }
 
-      // If refresh failed, clear auth and redirect to login
       ref.read(authTokenProvider.notifier).clear();
-      // Navigate to login screen
     }
 
     handler.next(err);
@@ -268,7 +248,6 @@ class ErrorInterceptor extends Interceptor {
     // Show toast notification for certain errors
     if (err.type == DioExceptionType.connectionError ||
         err.type == DioExceptionType.connectionTimeout) {
-      // Show connectivity error to user
       _showConnectivityError();
     }
 
@@ -276,7 +255,7 @@ class ErrorInterceptor extends Interceptor {
   }
 
   void _showConnectivityError() {
-    // Implement toast/snackbar notification
+    // Integrate with your app's notification system (snackbar, toast, etc.)
   }
 }
 ```
@@ -338,6 +317,40 @@ class RetryInterceptor extends Interceptor {
 }
 
 typedef RetryDecider = bool Function(DioException error);
+```
+
+### Response Validation Interceptor
+
+Validate response structure before it reaches your data layer. This catches malformed responses early and prevents bad data from propagating:
+
+```dart
+class ResponseValidationInterceptor extends Interceptor {
+  @override
+  void onResponse(Response response, ResponseInterceptorHandler handler) {
+    // Reject non-JSON content types from API endpoints
+    final contentType = response.headers.value('content-type');
+    if (contentType != null && !contentType.contains('application/json')) {
+      handler.reject(DioException(
+        requestOptions: response.requestOptions,
+        error: 'Unexpected response content type: $contentType',
+        type: DioExceptionType.badResponse,
+      ));
+      return;
+    }
+
+    // Reject unexpected status codes (Dio handles most, but belt-and-suspenders)
+    if (response.statusCode != null && response.statusCode! >= 500) {
+      handler.reject(DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        type: DioExceptionType.badResponse,
+      ));
+      return;
+    }
+
+    handler.next(response);
+  }
+}
 ```
 
 ## Network Exceptions
@@ -425,10 +438,9 @@ flutter run --dart-define=ENV=prod --dart-define=API_BASE_URL=https://api.produc
 
 # Staging
 flutter run --dart-define=ENV=staging --dart-define=API_BASE_URL=https://api.staging.com
-
-# Custom API URL
-flutter run --dart-define=API_BASE_URL=https://custom.api.com
 ```
+
+> Base URLs should be pinned at compile-time via `--dart-define`. Avoid accepting API URLs from user input or runtime-configurable sources to prevent redirect and injection attacks.
 
 ### Environment Configuration File
 
@@ -466,3 +478,5 @@ class AppConfig {
 6. **Retry failed requests** for transient errors
 7. **Don't log sensitive data** (tokens, passwords)
 8. **Use interceptors** for cross-cutting concerns
+9. **Enforce HTTPS** — reject non-HTTPS base URLs in production builds
+10. **Validate responses** — check content-type and structure before deserialization
