@@ -402,6 +402,17 @@ No border — elevation is achieved through color contrast alone.
 - Don't introduce colors outside the defined palette
 ```
 
+## Auto-Loading DESIGN.md
+
+Claude Code reads **CLAUDE.md** automatically at the start of every session, but does **not** automatically read DESIGN.md. To ensure the agent always applies the design system, add an instruction in the project's CLAUDE.md:
+
+```markdown
+# CLAUDE.md
+Always read and follow DESIGN.md before making any UI or styling changes.
+```
+
+Without this, DESIGN.md is only read when the user explicitly asks or when the design-md skill is triggered.
+
 ## Spec Reference
 
 Full specification: https://github.com/google-labs-code/design.md/blob/main/docs/spec.md
