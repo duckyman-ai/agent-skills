@@ -4,24 +4,45 @@
 
 ## ✨ Available Skills
 
+### 🎬 [capcut-editor](skills/capcut-editor/SKILL.md)
+
+Read, analyze, and create CapCut desktop (macOS) video editing projects programmatically.
+
+- 📚 Read & analyze CapCut project files
+- 🎬 Create new video projects programmatically
+- ✨ Add video effects (zoom, blur, sparkle, etc.)
+- 🎞️ Insert transitions between clips
+- 🎨 Apply color grading with HSL presets
+- 📝 Add text overlays with custom fonts
+
 ### 🎯 [flutter-clean-arch](skills/flutter-clean-arch/SKILL.md)
 
-Generate Flutter applications using Clean Architecture with feature-first structure, Riverpod state management, Dio + Retrofit networking, and fpdart error handling.
+Build Flutter apps with Clean Architecture — feature-first structure, Riverpod 3.0+ state management, Dio + Retrofit networking, and fpdart functional error handling.
 
-- 🏗️ Clean Architecture (Domain/Data/Presentation layers)
-- 🎛️ Riverpod 3.0+ with code generation
-- 🌐 Dio + Retrofit for type-safe REST API calls
-- ⚡ Functional error handling with Either type
-- 📁 Feature-first project organization
+- 🏗️ Clean Architecture with Domain/Data/Presentation layers
+- 🎛️ Riverpod 3.0+ state management with code generation
+- 🔌 Dio + Retrofit for type-safe REST API calls
+- ⚡ fpdart Either for functional error handling
+- ❄️ Freezed for immutable data classes
+- 🧪 Testing strategies across all layers
+
+### 🎨 [design-md](skills/design-md/SKILL.md)
+
+Create DESIGN.md files that define a project's visual identity as structured design tokens and human-readable guidance, based on the [Google Labs DESIGN.md spec](https://github.com/google-labs-code/design.md).
+
+- 🎨 YAML design tokens (colors, typography, spacing, rounded)
+- 📐 8 standard sections (Overview, Colors, Typography, Layout, Elevation, Shapes, Components, Do's & Don'ts)
+- 🔗 Token references for DRY design systems
+- 🔄 Compatible with Tailwind, Figma Variables, and CSS Custom Properties
 
 ### 📝 [git-convention](skills/git-convention/SKILL.md)
 
-Generate conventional git commit messages following Angular commit convention format.
+Write conventional git commit messages that are machine-readable, enable automatic changelog generation, and drive semantic versioning.
 
-- 📋 Angular commit message format
-- ⚠️ Breaking change handling
-- 📜 Automatic changelog support
-- 🔧 Commit linting configuration
+- 📋 Angular commit message format (`feat`, `fix`, `docs`, etc.)
+- ⚠️ Breaking change handling (`!` notation and footer)
+- 📜 Automatic changelog generation support
+- 🔧 Commit linting tooling by ecosystem (JS, Python, Flutter, Go, etc.)
 
 ## 📂 Project Structure
 
