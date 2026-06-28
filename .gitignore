@@ -7,3 +7,8 @@
 
 # OS
 .DS_Store
+
+# Agent runtimes (vendored skills, not first-party)
+.agents/
+.claude/
+skills-lock.json
