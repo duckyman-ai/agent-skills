@@ -44,6 +44,15 @@ Write conventional git commit messages that are machine-readable, enable automat
 - 📜 Automatic changelog generation support
 - 🔧 Commit linting tooling by ecosystem (JS, Python, Flutter, Go, etc.)
 
+### 🔌 [intellij-plugin](skills/intellij-plugin/SKILL.md)
+
+Build plugins for IntelliJ Platform–based IDEs (IntelliJ IDEA, Android Studio, PyCharm, GoLand, …) with Kotlin and the IntelliJ Platform Gradle Plugin 2.x.
+
+- 🧱 Scaffold, configure `gradle.properties`, and author `plugin.xml`
+- ⚡ Extension points & actions (Tool Window, Settings, Inspection, Annotator, Line Marker)
+- 🧪 IntelliJ Test Framework with light fixtures + `runIde` for manual testing
+- ✍️ Plugin signing and publishing to the JetBrains Marketplace
+
 ## 📂 Project Structure
 
 ```
